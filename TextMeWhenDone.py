@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-# Define function TextMeWhenDone.
-# Sends a text message to the specified phone number once the given 
+# Defines function TextMeWhenDone.
+# Sends a text message and email to the specified recipients once the given 
 # time-consuming function has completed running or is interrupted by an error. 
-# Is useful when you want to be alerted that your simulations are finished or 
+# Useful when you want to be alerted that your simulations are finished or 
 # your neural net is done training.
 
 # First you must (very easily) set up an App password for your Gmail account:
 # https://support.google.com/accounts/answer/185833?hl=en
 
-# If you want to text a phone witha carrier other than those below, refer to
+# If you want to text a phone with a carrier other than those below, refer to
 # the list below and add a new carrier_suffixes key:
 # Some phone carrier SMS formats: http://www.makeuseof.com/tag/email-to-sms/ 
 # (Has only been tested on AT&T phone)
@@ -47,18 +47,20 @@ def TextMeWhenDone(phone_carrier,phone_10digits,gmail_address,gmail_APP_password
     # Try executing the function with the given arguments, except all errors
     try:
         process(**process_args_dict)
-        body = 'Process completed successfully @ '
+        endtime = time.strftime("%H:%M:%S on %m/%d/%Y",time.localtime())
+        body = 'Process completed successfully at '
+        TEXT = body + endtime
         SUBJECT = 'SUCCESS'
-    except:
-        body = 'Process failed @ '
+    except Exception as error:
+        endtime = time.strftime("%H:%M:%S on %m/%d/%Y",time.localtime())
+        body = 'Process failed at '
+        TEXT = body + endtime + '\n' + error.__class__.__name__ + ': ' + error.message
         SUBJECT = 'FAILURE'
-    endtime = time.strftime("%H:%M:%S %m/%d/%Y",time.localtime())
-    TEXT = body + '{}'.format(endtime)
     
     # Email parameters
     domain = carrier_suffixes[phone_carrier]
     FROM = gmail_address
-    TO = ["{0}@{1}".format(phone_10digits,domain)]
+    TO = [FROM,"{0}@{1}".format(phone_10digits,domain)] #Email and text yourself
 
     # Prepare message content
     content = """\From: {0}\nTo: {1}\nSubject: {2}\n\n{3}""".format(FROM,', '.join(TO),SUBJECT,TEXT)
@@ -84,6 +86,8 @@ if __name__ == '__main__':
             time.sleep(pause_time)
             print i
             i+=1
+        #intentionally_fail = undefined
+            
     
     # Test function TextMeWhenDone:
     kwargs = {'max_number':10,'pause_time':1}
